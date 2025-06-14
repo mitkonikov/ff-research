@@ -153,7 +153,8 @@ print(latex_table)
 # %% Plot Pruning Ratios
 network_types = ['bp', 'ff', 'ffc', 'ffrnn']
 colors = ['red', 'green', 'blue', 'purple']
-display_names = ['BP', 'FFNN', 'FFNN+C', 'FFRNN']
+# colors = ["#ff1d1d", '#00ff00', "#00d9ff", '#ff00ff'] # dark
+display_names = ['BPNN', 'FFNN', 'FFNN+C', 'FFRNN']
 
 def plot_pruning_ratios(prune_reports_directory: str):
     print(prune_reports_directory)
@@ -166,7 +167,6 @@ def plot_pruning_ratios(prune_reports_directory: str):
     bp = open_prune_report(prune_reports_directory, 'bp')
     ff = open_prune_report(prune_reports_directory, 'ff')
     ffc = open_prune_report(prune_reports_directory, 'ffc')
-    # prune_reports_directory = 'prune_reports_max_last_10t'
     ffrnn = open_prune_report(prune_reports_directory, 'ffrnn')
     reports = [bp, ff, ffc, ffrnn]
 
@@ -236,7 +236,7 @@ def plot_pruning_ratios(prune_reports_directory: str):
             plt.plot(x, ymin, linestyle='--', color=colors[i], alpha=0.1)
             plt.plot(x, ymax, linestyle='--', color=colors[i], alpha=0.1)
 
-        plt.title('Accuracy vs. Compression ratio')
+        # plt.title('Accuracy vs. Compression ratio')
         plt.xscale('log', base=2)
         # plt.gca().invert_xaxis()
         plt.xlabel('Compression ratio')
@@ -245,20 +245,36 @@ def plot_pruning_ratios(prune_reports_directory: str):
         plt.grid(True)
 
         plt.xticks([1, 2, 8, 32, 128, 512, 2048])
-        # plt.yticks([0, 10, 20, 30, 40, 50, 60])
-        # plt.yticks([0, 20, 40, 60, 80, 100])
+        # plt.yticks([0, 10, 20, 30, 40, 50, 60]) # CIFAR10
+        plt.yticks([0, 20, 40, 60, 80, 100]) # MNIST, FashionMNIST
 
         xticks = [f'{tick}' for tick in plt.gca().get_xticks()]
         plt.gca().set_xticklabels(xticks)
         
-        # yticks = [f'{tick}%' for tick in plt.gca().get_yticks()]
-        # plt.gca().set_yticklabels(yticks)
+        yticks = [f'{tick}%' for tick in plt.gca().get_yticks()]
+        plt.gca().set_yticklabels(yticks)
 
         plt.show()
 
     _plot_pruning_ratios()
 
-plot_pruning_ratios('prune_reports_fashion_10t')
+matplotlib.style.use('default')
+
+plt.rcParams.update({'font.size': 14})
+# # Customizing the style to a light gray background
+# plt.rcParams.update({
+#     'axes.facecolor': "#000000",  # Dark gray background for the axes
+#     'figure.facecolor': "#000000",  # Slightly lighter gray for the figure
+#     'axes.edgecolor': 'white',     # White edges for contrast
+#     'text.color': 'white',         # White text for readability
+#     'axes.labelcolor': 'white',    # White labels
+#     'xtick.color': 'white',        # White x-axis ticks
+#     'ytick.color': 'white'         # White y-axis ticks
+# })
+
+plot_pruning_ratios('prune_reports_min_10t')
+# plot_pruning_ratios('prune_reports_fashion_10t')
+# plot_pruning_ratios('prune_reports_cifar10_10t')
 
 # %% Plot Sparsity
 
@@ -293,8 +309,8 @@ def get_sparsity(network_type: str, report: Dict):
 #     plt.show()
 
 # %%
-def read_sparsity_report(network_type: str, sparsity_type: SparsityType):
-    with open(f"./sparsity_report_fashion/{network_type}.json", "r") as f:
+def read_sparsity_report(sparsity_report: str, network_type: str, sparsity_type: SparsityType):
+    with open(f"./{sparsity_report}/{network_type}.json", "r") as f:
         data = f.read()
         dict = json.loads(data)
 
@@ -313,12 +329,15 @@ def read_sparsity_report(network_type: str, sparsity_type: SparsityType):
 
 # %%
 
+colors = ['orange', 'red', 'purple', 'darkblue', 'blue']
+# colors = ['#FF6700', '#FF073A', '#D100FF', "#25D3FF", "#00FFE1"]
+
 plt.rcParams.update({'font.size': 6})
 
-def plot_sparsity_multiple_networks(axes, sparsity_type: SparsityType, sparsity_name: str):
-    bp_sparsity = read_sparsity_report('bp', sparsity_type)
-    ff_sparsity = read_sparsity_report('ff', sparsity_type)
-    ffrnn_sparsity = read_sparsity_report('ffrnn', sparsity_type)
+def plot_sparsity_multiple_networks(axes, sparsity_report: str, sparsity_type: SparsityType, sparsity_name: str):
+    bp_sparsity = read_sparsity_report(sparsity_report, 'bp', sparsity_type)
+    ff_sparsity = read_sparsity_report(sparsity_report, 'ff', sparsity_type)
+    ffrnn_sparsity = read_sparsity_report(sparsity_report, 'ffrnn', sparsity_type)
 
     max_batch = len(bp_sparsity)
     bp1 = [x['layer_0']['weight'] for x in bp_sparsity[:max_batch]]
@@ -332,32 +351,41 @@ def plot_sparsity_multiple_networks(axes, sparsity_type: SparsityType, sparsity_
     ffrnn2 = [x['layer_2']['fw+bw'] for x in ffrnn_sparsity[:max_batch]]
 
     LW = 0.8
-    axes.plot(bp1, color='orange', label='BP Layer 1', linewidth=LW)
-    axes.plot(bp2, color='red', label='BP Layer 2', linewidth=LW)
-    axes.plot(bp3, color='purple', label='BP Layer 3', linewidth=LW)
+    axes.plot(bp1, color=colors[0], label='BPNN Layer 1', linewidth=LW)
+    axes.plot(bp2, color=colors[1], label='BPNN Layer 2', linewidth=LW)
+    axes.plot(bp3, color=colors[2], label='BPNN Layer 3', linewidth=LW)
 
-    axes.plot(ff1, color='darkblue', label='FFNN Layer 1', linewidth=LW)
-    axes.plot(ff2, color='blue', label='FFNN Layer 2', linewidth=LW)
+    axes.plot(ff1, color=colors[3], label='FFNN Layer 1', linewidth=LW)
+    axes.plot(ff2, color=colors[4], label='FFNN Layer 2', linewidth=LW)
 
     # Too cluttered...
     # axes.plot(ffrnn1, color='darkgreen', label='FFRNN Layer 1', linewidth=LW)
     # axes.plot(ffrnn2, color='green', label='FFRNN Layer 2', linewidth=LW)
 
     axes.set_xlabel('Training Batch')
-    axes.set_ylabel('Sparsity')
-    axes.set_title(f'{sparsity_name} over Training Batch')
+    axes.set_ylabel(sparsity_name)
     axes.grid()
 
     axes.legend(loc='upper right', fontsize=4)
 
-fig, axes = plt.subplots(2, 2, figsize=(6, 5), dpi=300)
-plot_sparsity_multiple_networks(axes[0][0], SparsityType.L1_NEG_ENTROPY, "L1-normalized Negative Entropy")
-plot_sparsity_multiple_networks(axes[0][1], SparsityType.L2_NEG_ENTROPY, "L2-normalized Negative Entropy")
-plot_sparsity_multiple_networks(axes[1][0], SparsityType.HOYER, "Hoyer Sparsity")
-plot_sparsity_multiple_networks(axes[1][1], SparsityType.GINI, "Gini Sparsity")
-plt.tight_layout()
-plt.show()
-matplotlib.style.use('default')
+# sparsity_report = 'sparsity_report'
+# sparsity_report = 'sparsity_report_fashion'
+sparsity_report = 'sparsity_report_cifar'
+
+types = [SparsityType.L1_NEG_ENTROPY, SparsityType.L2_NEG_ENTROPY, SparsityType.HOYER, SparsityType.GINI]
+type_display_names = ["L1-normalized Negative Entropy", "L2-normalized Negative Entropy", "Hoyer Sparsity", "Gini Sparsity"]
+save_names = ['L1', 'L2', 'H', 'G']
+
+for i in range(4):
+    fig, axes = plt.subplots(1, 1, figsize=(9/4, 2), dpi=600)
+    plot_sparsity_multiple_networks(axes, sparsity_report, types[i], type_display_names[i])
+    filename = f'./figures/{sparsity_report}_{save_names[i]}.png'
+    plt.tight_layout()
+    plt.show()
+    fig.savefig(filename)
+    print(f"Saved figure at {filename}.")
+
+# matplotlib.style.use('default')
 
 # %%
 def read_weights_histogram(network_type: str):
@@ -388,4 +416,45 @@ plt.show()
 # %%
 plt.plot(img_tensor[5000])
 plt.show()
+
+# %% Baseline accuracy
+
+network_types = ['bp', 'ff', 'ffc', 'ffrnn']
+display_names = ['BPNN', 'FFNN', 'FFNN+C', 'FFRNN']
+report_dirs = ['prune_reports_min_10t', 'prune_reports_fashion_10t', 'prune_reports_cifar10_10t']
+dataset_names = ['MNIST', 'FashionMNIST', 'CIFAR10']
+
+results = {name: [] for name in display_names}
+
+def open_prune_report(prune_reports_dir: str, network_type: str):
+    with open(f"./{prune_reports_dir}/{network_type}.json", "r") as f:
+        report = json.load(f)
+        return report
+
+def get_max_acc(report: Dict):
+    return max(trial['test'] * 100 for trials in report.values() for trial in trials)
+
+for rid, dataset in enumerate(dataset_names):
+    for n_idx, network in enumerate(network_types):
+        report = open_prune_report(report_dirs[rid], network)
+        max_acc = round(get_max_acc(report), 2)
+        results[display_names[n_idx]].append(max_acc)
+
+print("\\begin{table}[ht]")
+print("\\centering")
+print("\\caption{Baseline test accuracy (\%) across different networks and datasets.}")
+print("\\label{tab:max_accuracy}")
+print("\\begin{tabular}{l" + "c" * len(dataset_names) + "}")
+print("\\toprule")
+print("Network & " + " & ".join(dataset_names) + " \\\\")
+print("\\midrule")
+
+for name in display_names:
+    accs = " & ".join(f"{acc:.2f}" for acc in results[name])
+    print(f"{name} & {accs} \\\\")
+
+print("\\bottomrule")
+print("\\end{tabular}")
+print("\\end{table}")
+
 # %%

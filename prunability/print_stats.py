@@ -273,45 +273,48 @@ if __name__ == '__main__':
     # prune('bp', './models_bp/bp_mnist_3773ec.pt', 'mnist', prune_mode, './models_bp_out/bp.pt', f'./prune_reports_{out_prefix}/bp.json')
     
     # CIFAR10
-    # dataset = 'cifar10'
-    # prune_mode = 'random'
-    # prune_reports_out = 'prune_reports_cifar10_10t'
-    # pruned_models_out_dir = 'prune_models_cifar10_10t'
-    # models = {
-    #     'bp': 'bp_ef804e.pt',
-    #     'ff': 'ff_79499d.pt',
-    #     'ffc': 'ffc_b19697.pt',
-    #     'ffrnn': 'ffrnn_d91a8e.pt',
-    # }
+    dataset = 'cifar10'
+    prune_mode = 'random'
+    prune_reports_out = 'prune_reports_cifar10_2_10t'
+    pruned_models_out_dir = 'prune_models_cifar10_2_10t'
+    models = {
+        'bp': 'bp_ef804e.pt',
+        'ff': 'ff_79499d.pt',
+        'ffc': 'ffc_b19697.pt',
+        'ffrnn': 'ffrnn_8310db.pt',
+    }
 
-    # for key in models.keys():
-    #     models[key] = './models_cifar_ff/' + models[key]
+    os.makedirs(prune_reports_out, exist_ok=True)
+    os.makedirs(pruned_models_out_dir, exist_ok=True)
+
+    for key in models.keys():
+        models[key] = './models_cifar_ff_2/' + models[key]
 
     # prune('bp', models['bp'], dataset, prune_mode, f'./{pruned_models_out_dir}/bp.pt', f'./{prune_reports_out}/bp.json', 10)
     # prune('ff', models['ff'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_min.pt', f'./{prune_reports_out}/ff.json', 10)
     # prune('ffc', models['ffc'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_c_min.pt', f'./{prune_reports_out}/ffc.json', 10)
-    # prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', 10)
+    prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', 10)
 
-    # FASHION MNIST
-    dataset = 'fashion'
-    prune_mode = 'random'
-    prune_reports_out = 'prune_reports_fashion_10t'
-    pruned_models_out_dir = 'prune_models_fashion_10t'
-    tries = 10
-    models = {
-        'bp': 'bp_2d07dc.pt',
-        'ff': 'ff_be52ce.pt',
-        'ffc': 'ffc_b11968.pt',
-        'ffrnn': 'ffrnn_8e7bd9.pt',
-    }
+    # # FASHION MNIST
+    # dataset = 'fashion'
+    # prune_mode = 'random'
+    # prune_reports_out = 'prune_reports_fashion_10t'
+    # pruned_models_out_dir = 'prune_models_fashion_10t'
+    # tries = 10
+    # models = {
+    #     'bp': 'bp_2d07dc.pt',
+    #     'ff': 'ff_be52ce.pt',
+    #     'ffc': 'ffc_b11968.pt',
+    #     'ffrnn': 'ffrnn_8e7bd9.pt',
+    # }
 
-    for key in models.keys():
-        models[key] = './models_fashion_ff/' + models[key]
+    # for key in models.keys():
+    #     models[key] = './models_fashion_ff/' + models[key]
 
-    prune('bp', models['bp'], dataset, prune_mode, f'./{pruned_models_out_dir}/bp.pt', f'./{prune_reports_out}/bp.json', tries)
-    prune('ff', models['ff'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_min.pt', f'./{prune_reports_out}/ff.json', tries)
-    prune('ffc', models['ffc'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_c_min.pt', f'./{prune_reports_out}/ffc.json', tries)
-    prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', tries)
+    # prune('bp', models['bp'], dataset, prune_mode, f'./{pruned_models_out_dir}/bp.pt', f'./{prune_reports_out}/bp.json', tries)
+    # prune('ff', models['ff'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_min.pt', f'./{prune_reports_out}/ff.json', tries)
+    # prune('ffc', models['ffc'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_c_min.pt', f'./{prune_reports_out}/ffc.json', tries)
+    # prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', tries)
 
     # FASHION MNIST
     # dataset = 'fashion'
