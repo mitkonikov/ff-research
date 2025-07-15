@@ -103,6 +103,7 @@ suite.train(args.epochs)
 # %% Run Test
 logger.info("Running the testing procedure...")
 print(f"Test Accuracy: {suite.test()}")
+print(f"Time to train: {suite.time_to_train}")
 
 # %% Save Model
 logger.info("Saving model...")

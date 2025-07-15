@@ -18,6 +18,8 @@ device_type = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Device type: {device_type}")
 device = torch.device(device_type)
 
+logger.disabled = not args.verbose
+
 torch.manual_seed(args.seed)
 
 # %% Setup Dataset
@@ -132,6 +134,7 @@ suite.train(args.epochs)
 # %% Run Test
 logger.info(f"Running the testing procedure...")
 print(f"Test Accuracy: {suite.test()}")
+print(f"Time to train: {suite.time_to_train}")
 
 # %% Save model
 logger.info("Saving model...")

@@ -93,7 +93,9 @@ device_type = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Device type: {device_type}")
 device = torch.device(device_type)
 
-torch.manual_seed(42)
+logger.disabled = not args.verbose
+
+torch.manual_seed(args.seed)
 
 # %% Setup Dataset
 logger.info("Setting up the dataset...")
@@ -175,6 +177,7 @@ logger.info("Saving model...")
 net.strip_down()
 model_path = suite.save(args.output, append_hash=True)
 print(f"Model saved at {model_path}")
+print(f"Time to train: {suite.time_to_train}")
 
 # %% Save measurements
 if args.sparsity:
