@@ -6,7 +6,9 @@ import json
 import torch
 import numpy as np
 
+from fflib.enums import SparsityType
 from multiprocessing import Pool
+from plot_sparsity import accumulate_sparsity_report
 
 DISPLAY_NAMES = {
     'bp': 'BPNN',
@@ -214,6 +216,47 @@ def make_acc_latex_table():
     print("\\end{tabularx}")
     print("\\end{table}")
 
+# %% Make LaTeX table for sparsity report
+def make_sparsity_latex_table():
+    print("\\begin{table}[ht]")
+    print("\\centering")
+    print("\\caption{Sparsity of the baseline models across different networks and datasets.}")
+    print("\\label{table:sparsity_baseline}")
+    print("\\begin{tabularx}{\\textwidth}{lcccCC}")
+    print("\\toprule")
+    print("\\textbf{ST} & \\textbf{Network} & \\textbf{Layer} & \\textbf{MNIST} & \\textbf{FashionMNIST} & \\textbf{CIFAR-10} \\\\")
+    print("\\midrule")
+
+    for sparsity in [SparsityType.HOYER, SparsityType.L1_NEG_ENTROPY, SparsityType.L2_NEG_ENTROPY, SparsityType.GINI]:
+        print(f"\\multirow{{5}}{{*}}{{\\rotatebox[origin=c]{{90}}{{\\textbf{str(sparsity).split('.')[1]}}}}}", end="")
+        for net in ['bp', 'ff']:
+            if net == 'ff':
+                print(f"& \\multirow{{2}}{{*}}{{{DISPLAY_NAMES[net]}}}", end="")
+                for layer in [0, 1]:
+                    print(f" & \\textbf{{Layer {layer + 1}}}", end="")
+                    for dataset in ['mnist', 'fashion', 'cifar10']:
+                        bp, ff, ffrnn = accumulate_sparsity_report(dataset, sparsity)
+                        mean = np.mean(ff[layer], axis=0)
+                        std = np.std(ff[layer], axis=0)
+                        sparsity_str = f"{mean[-1]:.7f} $\\pm$ {std[-1]:.7f}"
+                        print(f" & {sparsity_str}", end="")
+                    print("\\\\")
+            elif net == 'bp':
+                print(f"& \\multirow{{3}}{{*}}{{{DISPLAY_NAMES[net]}}}", end="")
+                for layer in [0, 1, 2]:
+                    print(f" & \\textbf{{Layer {layer + 1}}}", end="")
+                    for dataset in ['mnist', 'fashion', 'cifar10']:
+                        bp, ff, ffrnn = accumulate_sparsity_report(dataset, sparsity)
+                        mean = np.mean(bp[layer], axis=0)
+                        std = np.std(bp[layer], axis=0)
+                        sparsity_str = f"{mean[-1]:.7f} $\\pm$ {std[-1]:.7f}"
+                        print(f" & {sparsity_str}", end="")
+                    print("\\\\")
+            print("\\midrule")
+
+    print("\\bottomrule")
+    print("\\end{tabularx}")
+    print("\\end{table}")
 
 # %% Run
 if __name__ == '__main__':
@@ -222,6 +265,7 @@ if __name__ == '__main__':
     #         print_acc_to_json(dataset, net, './accuracy_reports')
 
     # make_acc_latex_table()
+    # make_sparsity_latex_table()
 
     # The difference between minimization and maximization
     # save_min_max('ff3', './models_ff_v3_max', './models_ff_v3_min', 'mnist', './minimize_reports2/ff_v3.json')

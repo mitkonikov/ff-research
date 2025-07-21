@@ -276,57 +276,6 @@ plot_pruning_ratios('prune_reports_min_10t')
 # plot_pruning_ratios('prune_reports_fashion_10t')
 # plot_pruning_ratios('prune_reports_cifar10_10t')
 
-# %% Plot Sparsity
-
-def get_sparsity(network_type: str, report: Dict):
-    result = []
-    for key in report.keys():
-        hoyer = report[key]['HOYER']
-        if network_type == 'ff':
-            layer1 = hoyer['layer_0']
-            layer2 = hoyer['layer_1']
-        if network_type == 'ffc':
-            layer1 = hoyer['layer_0']
-            layer2 = hoyer['layer_1']
-        if network_type == 'ffrnn':
-            layer1 = hoyer['layer_1']['fw+bw']
-            layer2 = hoyer['layer_2']['fw+bw']
-        if network_type == 'bp':
-            layer1 = hoyer['layer0']['weight']
-            layer2 = hoyer['layer1']['weight']
-        result.append((layer1, layer2))
-    return result
-
-# def plot_sparsity0():
-#     sparsities = [get_sparsity(network_types[i], reports[i]) for i in range(len(reports))]
-#     for i in range(len(sparsities)):
-#         if display_names[i] == 'BP':
-#             continue
-#         l1, l2 = zip(*sparsities[i])
-#         plt.plot(l1, color=colors[i], label=display_names[i])
-
-#     plt.legend()
-#     plt.show()
-
-# %%
-def read_sparsity_report(sparsity_report: str, network_type: str, sparsity_type: SparsityType):
-    with open(f"./{sparsity_report}/{network_type}.json", "r") as f:
-        data = f.read()
-        dict = json.loads(data)
-
-        result = { }
-        for type in SparsityType:
-            result[str(type).split('.')[1]] = []
-        
-        for epoch in dict.keys():
-            for batch in dict[epoch]:
-                for type in SparsityType:
-                    t = str(type).split('.')[1]
-                    result[t].append(batch[t])
-        
-        t = str(sparsity_type).split('.')[1]
-        return result[t]
-
 # %%
 
 colors = ['orange', 'red', 'purple', 'darkblue', 'blue']
