@@ -7,3 +7,7 @@ prune_models*
 minimize_reports*
 sparsity_*
 activations_figures
+sparsity/report
+sparsity/models
+accuracy_reports
+acc_*

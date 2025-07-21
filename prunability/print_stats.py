@@ -4,8 +4,16 @@ import os
 import asyncio
 import json
 import torch
+import numpy as np
 
 from multiprocessing import Pool
+
+DISPLAY_NAMES = {
+    'bp': 'BPNN',
+    'ff': 'FFNN',
+    'ffc': 'FFNN+C',
+    'ffrnn': 'FFRNN'
+}
 
 # %% Gather Statistics
 def get_loader(network_type: str):
@@ -141,8 +149,80 @@ def prune(network_type: str, checkpoint: str, dataset: str, prune_mode: str, out
         f.write(json.dumps(result, indent=4))
     print(f"JSON output saved at {json_output}")
 
+# %% Accuracy report
+def print_acc_to_json(dataset: str, network_type: str, output_dir: str):
+    loader = get_loader(network_type)
+
+    dir = f"./sparsity/models/{dataset}/{network_type}"
+    checkpoints = []
+    for file in os.listdir(dir):
+        if file.endswith(".txt"):
+            checkpoint = os.path.join(dir, file)
+            checkpoints.append(checkpoint)
+
+    checkpoint_args = []
+    for checkpoint in checkpoints:
+        print(f"Test accuracy on {network_type} {checkpoint}...")
+        args = {
+            'network': loader,
+            'filepath': checkpoint,
+            'dataset': dataset,
+            'batch': 256,
+            'prune_mode': 'random',
+            'neurons': 2000,
+            'seed': 42,
+            'output': os.path.join(output_dir, f"{network_type}_{dataset}.pt")
+        }
+
+        checkpoint_args.append(args)
+        
+    with Pool(4) as p:
+        data = p.map(get_stats_from_model_args, checkpoint_args)
+
+    output_json = os.path.join(output_dir, f"{network_type}_{dataset}.json")
+    result = { 'network': network_type, 'dataset': dataset, 'data': data }
+    with open(output_json, "w") as f:
+        f.write(json.dumps(result, indent=4))
+    print(f"JSON output saved at {output_json}")
+
+
+# %% Make LaTeX table for accuracy report
+def make_acc_latex_table():
+    print("\\begin{table}[ht]")
+    print("\\centering")
+    print("\\caption{Baseline test accuracy (\\%) across different networks and datasets.}")
+    print("\\label{table:max_accuracy}")
+    print("\\begin{tabularx}{\\textwidth}{LCCC}")
+    print("\\toprule")
+    print("\\textbf{Network} & \\textbf{MNIST} & \\textbf{FashionMNIST} & \\textbf{CIFAR-10} \\\\")
+    print("\\midrule")
+
+    os.makedirs("./accuracy_reports", exist_ok=True)
+
+    for net in ['bp', 'ff', 'ffc', 'ffrnn']:
+        print(f"{DISPLAY_NAMES[net]}", end="")
+        for dataset in ['mnist', 'fashion', 'cifar10']:
+            with open(f"./accuracy_reports/{net}_{dataset}.json", "r") as f:
+                data = json.load(f)
+                accs = [round(d['pretest'] * 100, 2) for d in data['data']]
+                std = np.std(accs)
+                accs_str = f"{np.mean(accs):.2f} $\\pm$ {std:.2f}"
+                print(f" & {accs_str}", end="")
+        print("\\\\")
+
+    print("\\bottomrule")
+    print("\\end{tabularx}")
+    print("\\end{table}")
+
+
 # %% Run
 if __name__ == '__main__':
+    # for net in ['bp', 'ff', 'ffc', 'ffrnn']:
+    #     for dataset in ['mnist', 'fashion', 'cifar10']:
+    #         print_acc_to_json(dataset, net, './accuracy_reports')
+
+    # make_acc_latex_table()
+
     # The difference between minimization and maximization
     # save_min_max('ff3', './models_ff_v3_max', './models_ff_v3_min', 'mnist', './minimize_reports2/ff_v3.json')
     # save_min_max('ff', './models_ff_max', './models_ff_min', 'mnist', './minimize_reports2/ff.json')
@@ -273,27 +353,27 @@ if __name__ == '__main__':
     # prune('bp', './models_bp/bp_mnist_3773ec.pt', 'mnist', prune_mode, './models_bp_out/bp.pt', f'./prune_reports_{out_prefix}/bp.json')
     
     # CIFAR10
-    dataset = 'cifar10'
-    prune_mode = 'random'
-    prune_reports_out = 'prune_reports_cifar10_2_10t'
-    pruned_models_out_dir = 'prune_models_cifar10_2_10t'
-    models = {
-        'bp': 'bp_ef804e.pt',
-        'ff': 'ff_79499d.pt',
-        'ffc': 'ffc_b19697.pt',
-        'ffrnn': 'ffrnn_8310db.pt',
-    }
+    # dataset = 'cifar10'
+    # prune_mode = 'random'
+    # prune_reports_out = 'prune_reports_cifar10_2_10t'
+    # pruned_models_out_dir = 'prune_models_cifar10_2_10t'
+    # models = {
+    #     'bp': 'bp_ef804e.pt',
+    #     'ff': 'ff_79499d.pt',
+    #     'ffc': 'ffc_b19697.pt',
+    #     'ffrnn': 'ffrnn_8310db.pt',
+    # }
 
-    os.makedirs(prune_reports_out, exist_ok=True)
-    os.makedirs(pruned_models_out_dir, exist_ok=True)
+    # os.makedirs(prune_reports_out, exist_ok=True)
+    # os.makedirs(pruned_models_out_dir, exist_ok=True)
 
-    for key in models.keys():
-        models[key] = './models_cifar_ff_2/' + models[key]
+    # for key in models.keys():
+    #     models[key] = './models_cifar_ff_2/' + models[key]
 
-    # prune('bp', models['bp'], dataset, prune_mode, f'./{pruned_models_out_dir}/bp.pt', f'./{prune_reports_out}/bp.json', 10)
-    # prune('ff', models['ff'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_min.pt', f'./{prune_reports_out}/ff.json', 10)
-    # prune('ffc', models['ffc'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_c_min.pt', f'./{prune_reports_out}/ffc.json', 10)
-    prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', 10)
+    # # prune('bp', models['bp'], dataset, prune_mode, f'./{pruned_models_out_dir}/bp.pt', f'./{prune_reports_out}/bp.json', 10)
+    # # prune('ff', models['ff'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_min.pt', f'./{prune_reports_out}/ff.json', 10)
+    # # prune('ffc', models['ffc'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_c_min.pt', f'./{prune_reports_out}/ffc.json', 10)
+    # prune('ffrnn', models['ffrnn'], dataset, prune_mode, f'./{pruned_models_out_dir}/ff_rnn_min.pt', f'./{prune_reports_out}/ffrnn.json', 10)
 
     # # FASHION MNIST
     # dataset = 'fashion'
@@ -372,4 +452,3 @@ if __name__ == '__main__':
 # tensor(0.9780) tensor(0.9828)
 # tensor(0.0012) tensor(0.0010)
 # tensor(0.9794) tensor(0.9844)
-# %%
