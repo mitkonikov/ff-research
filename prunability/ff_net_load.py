@@ -16,7 +16,7 @@ from fflib.utils.ff_suite import FFSuite
 from fflib.enums import SparsityType
 from fflib.utils.ff_logger import logger
 
-from utils import file_size, prune, plot_activations
+from utils import file_size, prune, plot_activations, plot_activations_hsv
 from typing import cast
 
 logger.disabled = not args.verbose
@@ -286,3 +286,39 @@ if args.plot:
 # %% Save activations
 if args.save_figures:
     plot_activations(pos_activations, args.save_figures)
+
+
+# %% Save activations in HSV style
+if args.save_activations_hsv:
+    net = cast(FFNet, suite.net)
+
+    net._create_hooks_dict()
+
+    # activations[class, layer, neuron]
+    activations = [
+        [torch.zeros(net.layers[1].out_features).to(device) for layer in range(2)]
+        for _ in range(10)
+    ]
+    
+    def save_activation(x: torch.Tensor, layer_idx: int):
+        # x: [batch_size, num_neurons]
+        for i in range(x.size(0)):
+            label = current_labels[i].item()
+            activations[label][layer_idx] += x[i].detach().abs()
+
+    net.register_hook('layer_activation', 'h1', save_activation)
+
+    it = iter(mnist.test_loader)
+    for i in range(10):
+        batch = next(it)
+        x, y = batch[0].to(device), batch[1].to(device)
+
+        current_labels = y
+
+        y_enc = mnist.encode_output(y)
+        y_enc = torch.zeros_like(y_enc)
+        input = mnist.combine_to_input(x, y_enc)
+
+        net(input)
+
+    plot_activations_hsv(activations, args.save_activations_hsv)

@@ -4,6 +4,8 @@ import argparse
 import torch
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.colors as mcolors
+import numpy as np
 
 from argparse import ArgumentParser
 from typing import List
@@ -93,6 +95,7 @@ class ArgumentsLoad(ArgumentParserBase):
         parser.add_argument("--substract-neg", help="Substract the negative activations", action="store_true")
         parser.add_argument("--prune-mode", help="Pruning mode [random, first, last]", default="random", type=str)
         parser.add_argument("--save-figures", help="Path where to save figures. It will save only if provided.", default=None, type=str)
+        parser.add_argument("--save-activations-hsv", help="Save the activations in a cool HSV style figures. It will save only if provided.", default=None, type=str)
     
     def run(self, parser: argparse.ArgumentParser, args_inject: List[str] | None = None):
         # It should skip the argument parser if it finds it runs within an IPython shell.
@@ -155,12 +158,14 @@ def prune(layer_weights: List[torch.Tensor], activations: torch.Tensor, prune_mo
 
 def plot_activations(activations, output: str | None = None):
     fig = plt.figure(figsize=(10, 4))
-    gs = gridspec.GridSpec(1, 4, width_ratios=[1, 1, 1, 0.1], wspace=0)
+    gs = gridspec.GridSpec(1, 3, width_ratios=[1, 1, 1], wspace=0)
 
     for i, activation in enumerate(activations):
+        if i == len(activations) - 1:
+            continue
         activation = activation.detach().cpu()[0]
         num_units = activation.shape[0]
-        num_cols = min(40, num_units)  # Display up to 10 activations
+        num_cols = min(40, num_units)
         num_rows = int(ceil(num_units / num_cols))
         axes = fig.add_subplot(gs[i])
         axes.axis('off')
@@ -171,20 +176,126 @@ def plot_activations(activations, output: str | None = None):
         else:
             activation = activation.reshape(num_rows, num_cols)
             axes.title.set_text(f'Layer {i}')
-            if i == len(activations) - 1:
-                activation = activation.reshape(10, 1)
-                axes.title.set_text('Output')
-                ticks = list(range(0, num_units))
-                axes.set_xticks([], [])
-                axes.set_yticks(ticks, ticks)
-                axes.axis('on')
-                axes.yaxis.tick_right()
-                aspect = 'auto'
 
         axes.imshow(activation, cmap='gray', aspect=aspect)
 
     if output is not None:
+        plt.tight_layout()
         plt.savefig(output)
     else:
         plt.tight_layout()
+        plt.show()
+
+
+def plot_activations_grid(activations: torch.Tensor, output: str | None = None):
+    # activations = [class, layer, neuron]
+    num_classes = len(activations)
+    num_layers = len(activations[0])
+
+    fig, axes = plt.subplots(num_classes, num_layers, figsize=(1, 10), squeeze=False)
+
+    for class_idx in range(num_classes):
+        for layer_idx in range(num_layers):
+            ax = axes[class_idx][layer_idx]
+            neuron_activations = activations[class_idx][layer_idx].cpu().numpy()
+            neuron_activations = neuron_activations.reshape(50, 40)
+
+            ax.imshow(neuron_activations, cmap='gray', aspect='auto')
+            ax.set_title(f"Class {class_idx}, Layer {layer_idx + 1}", fontsize=8)
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+def plot_activations_hsv(activations: list[list[torch.Tensor]], output: str | None = None):
+    # activations = [class, layer, neuron]
+    num_classes = len(activations)
+    num_layers = len(activations[0])
+    num_neurons = activations[0][0].shape[0]
+
+    # Create hue gradient (H from 0 to 1), one for each class
+    hue = np.linspace(0, 1, num_classes)
+
+    img_hsv = [
+        np.zeros((1, num_neurons, 3), dtype=np.float32),
+        np.zeros((1, num_neurons, 3), dtype=np.float32)
+    ]
+
+    for layer_idx in range(num_layers):
+        # Flatten all activations for this layer into one list
+        layer_values = [
+            activations[class_idx][layer_idx][neuron].item()
+            for class_idx in range(num_classes)
+            for neuron in range(num_neurons)
+        ]
+        min_val = min(layer_values)
+        max_val = max(layer_values)
+        range_val = max_val - min_val if max_val != min_val else 1.0
+
+        for neuron in range(num_neurons):
+            # Find the class with the highest activation for this neuron
+            all_classes = [
+                activations[class_idx][layer_idx][neuron].item()
+                for class_idx in range(num_classes)
+            ]
+
+            class_max_idx = np.argmax(all_classes)
+            sum = np.sum(all_classes)
+
+            h = hue[class_max_idx]
+            
+            v_raw = activations[class_max_idx][layer_idx][neuron].item()
+            v = (v_raw - min_val) / range_val
+            v = max(0, min(1, v))
+
+            s = abs(v_raw) / (abs(sum) + 1e-5)
+
+            img_hsv[layer_idx][0, neuron] = [h, s, v]
+
+    img_rgb = [mcolors.hsv_to_rgb(img) for img in img_hsv]
+
+    # Plot spectrum bar
+    width = 360
+    height = 10
+    spectrum_hue = np.linspace(0, 1, width)
+    spectrum_hsv = np.stack([spectrum_hue, np.ones_like(spectrum_hue), np.ones_like(spectrum_hue)], axis=1)
+    spectrum_rgb = mcolors.hsv_to_rgb(spectrum_hsv)
+    spectrum_img = np.tile(spectrum_rgb[np.newaxis, :, :], (height, 1, 1))
+
+    fig = plt.figure(figsize=(6, 5))
+    gs = gridspec.GridSpec(2, 2, height_ratios=[0.5, 6])
+
+    ax1 = fig.add_subplot(gs[0, :])
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax3 = fig.add_subplot(gs[1, 1])
+
+    # Plot color spectrum with ticks for each class on ax1
+    ax1.imshow(spectrum_img, aspect='auto')
+    step = width // num_classes
+    tick_positions = [i * step + step // 2 for i in range(num_classes)]
+    tick_labels = [f'{i}' for i in range(num_classes)]
+
+    for pos in tick_positions:
+        ax1.axvline(pos, color='white', linestyle='--', linewidth=0.5)
+
+    ax1.set_xticks(tick_positions)
+    ax1.set_xticklabels(tick_labels)
+    ax1.set_yticks([])
+    ax1.set_title("Class Hue Mapping")
+
+    # Plot neuron activations
+    ax2.imshow(img_rgb[0].reshape(50, 40, 3), aspect='auto')
+    ax2.set_title("Neuron Activations (Layer 1)")
+
+    ax3.imshow(img_rgb[1].reshape(50, 40, 3), aspect='auto')
+    ax3.set_title("Neuron Activations (Layer 2)")
+
+    plt.tight_layout()
+
+    if output:
+        plt.savefig(output, dpi=300)
+    else:
         plt.show()

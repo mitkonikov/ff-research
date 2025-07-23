@@ -17,7 +17,7 @@ from fflib.utils.data.datasets import CreateDatasetFromName
 from fflib.utils.maths import ComputeSparsity, ComputeStats
 from fflib.enums import SparsityType
 
-from utils import file_size, prune, plot_activations
+from utils import file_size, prune, plot_activations, plot_activations_hsv
 from typing import cast
 
 logger.disabled = not args.verbose
@@ -189,17 +189,6 @@ if args.plot:
     sparsity = ComputeSparsity(acts[0][0].detach(), SparsityType.HOYER)
     print(sparsity)
 
-# %% EXP2
-
-# if args.plot:
-    # layer = 0
-    # dots = [
-    #     net.layers[li[layer]].weight[sorted_indices[layer, i]].dot(
-    #         net.layers[li[layer]].weight[sorted_indices[layer, i + 1]]).item() for i in range(2000 - 1)]
-
-    # plt.plot(dots)
-    # plt.show()
-
 # %% Prune the network
 
 net.layers[li[0]].weight.data = net.layers[li[0]].weight[important_indices[0]]
@@ -257,3 +246,43 @@ if args.plot:
 # %% Save activations
 if args.save_figures:
     plot_activations(activations, args.save_figures)
+
+# %% Save activations in HSV style
+if args.save_activations_hsv:
+    activations = [
+        [torch.zeros(2000).to(device) for layer in range(2)]
+        for _ in range(10)
+    ]
+
+    def forward_hook_1(module, input, x):
+        for i in range(x.size(0)):
+            label = current_labels[i].item()
+            activations[label][0] += x[i].detach().abs()
+
+    def forward_hook_2(module, input, x):
+        for i in range(x.size(0)):
+            label = current_labels[i].item()
+            activations[label][1] += x[i].detach().abs()
+
+    from collections import OrderedDict
+
+    for i in range(len(net.layers)):
+        if isinstance(net.layers[i], torch.nn.Linear):
+            net.layers[i]._forward_hooks = OrderedDict()
+
+    hooks.append(net.layers[li[0]].register_forward_hook(forward_hook_1))
+    hooks.append(net.layers[li[1]].register_forward_hook(forward_hook_2))
+
+    # Get one batch
+    x, y = next(iter(dataloader.get_test_loader()))
+    x, y = x.to(device), y.to(device)
+
+    current_labels = y
+
+    # Push the batch through the network
+    g = net(x)
+
+    for hook in hooks:
+        hook.remove()
+
+    plot_activations_hsv(activations, args.save_activations_hsv)
