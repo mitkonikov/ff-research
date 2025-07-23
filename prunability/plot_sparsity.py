@@ -113,19 +113,88 @@ def plot_accumulated_sparsity_report(dataset, sparsity_type, bp, ff, ffrnn, min_
     plt.tight_layout()
     plt.show()
 
+def plot_accumulated_sparsity_report_for_all_datasets(sparsity_type, min_y=None, max_y=None, save=False, output=None):
+    datasets = ['mnist', 'fashion', 'cifar10']
+    fig, axes = plt.subplots(1, 3, figsize=(12, 12/3), sharey=True)
+    for i, dataset in enumerate(datasets):
+        bp, ff, ffrnn = accumulate_sparsity_report(dataset, sparsity_type)
+        
+        for j in range(3):
+            if len(bp[j]) == 0:
+                continue
+            mean = np.nanmean(bp[j], axis=0)
+            std = np.nanstd(bp[j], axis=0)
+            x = np.arange(len(mean))
+            axes[i].plot(x, mean, label=f'BPNN Layer {j+1}')
+            axes[i].fill_between(x, mean-std, mean+std, alpha=0.2)
+
+        for j in range(2):
+            if len(ff[j]) == 0:
+                continue
+            mean = np.nanmean(ff[j], axis=0)
+            std = np.nanstd(ff[j], axis=0)
+            x = np.arange(len(mean))
+            axes[i].plot(x, mean, label=f'FFNN Layer {j+1}')
+            axes[i].fill_between(x, mean-std, mean+std, alpha=0.2)
+
+        if FFRNN:
+            for j in range(2):
+                if len(ffrnn[j]) == 0:
+                    continue
+                mean = np.nanmean(ffrnn[j], axis=0)
+                std = np.nanstd(ffrnn[j], axis=0)
+                x = np.arange(len(mean))
+                axes[i].plot(x, mean, label=f'FFRNN Layer {j+1}')
+                axes[i].fill_between(x, mean-std, mean+std, alpha=0.2)
+
+
+        axes[i].set_xlabel('Training Batch')
+        axes[i].set_ylabel('Sparsity')
+        axes[i].grid(True)
+
+    # Set ticks from arguments
+    if min_y is not None and max_y is not None:
+        for ax in axes:
+            ax.set_ylim(min_y, max_y)
+
+    # Create a legend in the second row
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=5, bbox_to_anchor=(0.5, 0.95))
+    fig.subplots_adjust(
+        left=0.065,
+        bottom=0.2,
+        right=0.968,
+        top=0.825,
+        wspace=0.122,
+        hspace=0.198
+    )
+
+    if save:
+        if output is None:
+            output = f'sparsity_report_{str(sparsity_type).split(".")[1]}.png'
+        plt.savefig(output, bbox_inches='tight')
+    else:
+        plt.show()
 
 # %% Read sparsity report and plot
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Plot accumulated sparsity report. We use multithreading to speed up the loading of the sparsity reports.')
-    parser.add_argument('-d', '--dataset', type=str, required=True, help='Dataset name')
     parser.add_argument('-t', '--sparsity_type', type=str, required=True, help='Type of sparsity to plot')
     parser.add_argument('--enable-ffrnn', action='store_true', help='Enable FFRNN sparsity report')
     parser.add_argument('--min-y', type=float, default=None, help='Minimum y-axis value')
     parser.add_argument('--max-y', type=float, default=None, help='Maximum y-axis value')
+    parser.add_argument('--save', action='store_true', help='Save the plot instead of showing it')
+    parser.add_argument('--output', type=str, default=None, help='Output file to save the plot')
     args = parser.parse_args()
 
     FFRNN = args.enable_ffrnn
 
-    bp, ff, ffrnn = accumulate_sparsity_report(args.dataset, args.sparsity_type)
-    plot_accumulated_sparsity_report(args.dataset, args.sparsity_type, bp, ff, ffrnn, args.min_y, args.max_y)
+    plot_accumulated_sparsity_report_for_all_datasets(
+        sparsity_type=args.sparsity_type,
+        min_y=args.min_y,
+        max_y=args.max_y,
+        save=args.save,
+        output=args.output
+    )
+    
