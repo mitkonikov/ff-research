@@ -87,42 +87,6 @@ if args.sparsity:
         for type in SparsityType:
             result[str(type).split('.')[1]] = net.sparsity(type)
 
-        def process(w: torch.Tensor):
-            tt = w.detach().flatten()
-            q25 = torch.quantile(tt, 0.25)
-            q75 = torch.quantile(tt, 0.75)
-            filtered = tt[(tt >= q25) & (tt <= q75)]
-            return filtered.cpu().histogram(300).hist.tolist()
-
-        def process2(w: torch.Tensor):
-            tt = w.detach().flatten()
-            q25 = torch.quantile(tt, 0.40)
-            q75 = torch.quantile(tt, 0.60)
-            filtered = tt[(tt >= q25) & (tt <= q75)]
-            return filtered.cpu().histogram(300).hist.tolist()
-
-        result['HISTOGRAM'] = {
-            'layer_0': {
-                'weight': process(net.layers[0].weight),
-                'bias': process(net.layers[0].bias),
-            },
-            'layer_1': {
-                'weight': process(net.layers[1].weight),
-                'bias': process(net.layers[1].bias),
-            },
-        }
-
-        result['HISTOGRAM2'] = {
-            'layer_0': {
-                'weight': process2(net.layers[0].weight),
-                'bias': process2(net.layers[0].bias),
-            },
-            'layer_1': {
-                'weight': process2(net.layers[1].weight),
-                'bias': process2(net.layers[1].bias),
-            },
-        }
-
         measurements[str(e)].append(result)
 
     suite.set_pre_batch_callback(pre_batch)

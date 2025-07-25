@@ -11,6 +11,7 @@ from fflib.utils.data.mnist import NegativeGenerator as MNISTNEG
 from fflib.utils.data.datasets import CreateDatasetFromName
 from fflib.utils.ffc_suite import FFCSuite
 from fflib.utils.ff_logger import logger
+from fflib.enums import SparsityType
 
 # Setup the device
 device_type = "cuda" if torch.cuda.is_available() else "cpu"
@@ -73,6 +74,21 @@ if args.scheduler: # Enable the LR Scheduler
 
     suite.set_pre_epoch_callback(callback = scheduler)
 
+# %% Sparsity Measurement
+if args.sparsity:
+    measurements = { }
+    def pre_batch(net: FFC, e: int, b: int):
+        if str(e) not in measurements:
+            measurements[str(e)] = []
+
+        result = { }
+        for type in SparsityType:
+            result[str(type).split('.')[1]] = net.sparsity(type)
+
+        measurements[str(e)].append(result)
+
+    suite.set_pre_batch_callback(pre_batch)
+
 # %% Run Train
 logger.info("Running the training procedure...")
 logger.info(f"Parameters: Epochs = {args.epochs}")
@@ -89,3 +105,9 @@ print(f"Time to train: {suite.time_to_train}")
 logger.info("Saving model...")
 model_path = suite.save(args.output, append_hash=True)
 print(f"Model saved at {model_path}")
+
+# %% Save measurements
+if args.sparsity:
+    with open(args.so, "w") as f:
+        import json
+        f.write(json.dumps(measurements))

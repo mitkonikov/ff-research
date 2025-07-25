@@ -78,19 +78,6 @@ if args.sparsity:
         for type in SparsityType:
             result[str(type).split('.')[1]] = net.sparsity(type)
 
-        result['HISTOGRAM'] = {
-            'layer_0': {
-                'fw': net.layers[1].fw.detach().flatten().cpu().histogram(200).hist.tolist(),
-                'bw': net.layers[1].bw.detach().flatten().cpu().histogram(200).hist.tolist(),
-                'bias': net.layers[1].fb.detach().flatten().cpu().histogram(200).hist.tolist(),
-            },
-            'layer_1': {
-                'fw': net.layers[2].fw.detach().flatten().cpu().histogram(200).hist.tolist(),
-                'bw': net.layers[2].bw.detach().flatten().cpu().histogram(200).hist.tolist(),
-                'bias': net.layers[2].fb.detach().flatten().cpu().histogram(200).hist.tolist(),
-            },
-        }
-
         measurements[str(e)].append(result)
 
     suite.set_pre_batch_callback(pre_batch)
