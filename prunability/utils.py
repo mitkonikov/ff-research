@@ -265,33 +265,43 @@ def plot_activations_hsv(activations: list[list[torch.Tensor]], output: str | No
     spectrum_rgb = mcolors.hsv_to_rgb(spectrum_hsv)
     spectrum_img = np.tile(spectrum_rgb[np.newaxis, :, :], (height, 1, 1))
 
-    fig = plt.figure(figsize=(6, 5))
-    gs = gridspec.GridSpec(2, 2, height_ratios=[0.5, 6])
+    DRAW_SPECTRUM = False
+    if DRAW_SPECTRUM:
+        fig = plt.figure(figsize=(6, 5))
+        gs = gridspec.GridSpec(2, 2, height_ratios=[0.5, 6])
 
-    ax1 = fig.add_subplot(gs[0, :])
-    ax2 = fig.add_subplot(gs[1, 0])
-    ax3 = fig.add_subplot(gs[1, 1])
+        ax1 = fig.add_subplot(gs[0, :])
+        ax2 = fig.add_subplot(gs[1, 0])
+        ax3 = fig.add_subplot(gs[1, 1])
 
-    # Plot color spectrum with ticks for each class on ax1
-    ax1.imshow(spectrum_img, aspect='auto')
-    step = width // num_classes
-    tick_positions = [i * step + step // 2 for i in range(num_classes)]
-    tick_labels = [f'{i}' for i in range(num_classes)]
+        # Plot color spectrum with ticks for each class on ax1
+        ax1.imshow(spectrum_img, aspect='auto')
+        step = width // num_classes
+        tick_positions = [i * step + step // 2 for i in range(num_classes)]
+        tick_labels = [f'{i}' for i in range(num_classes)]
 
-    for pos in tick_positions:
-        ax1.axvline(pos, color='white', linestyle='--', linewidth=0.5)
+        for pos in tick_positions:
+            ax1.axvline(pos, color='white', linestyle='--', linewidth=0.5)
 
-    ax1.set_xticks(tick_positions)
-    ax1.set_xticklabels(tick_labels)
-    ax1.set_yticks([])
-    ax1.set_title("Class Hue Mapping")
+        ax1.set_xticks(tick_positions)
+        ax1.set_xticklabels(tick_labels)
+        ax1.set_yticks([])
+        ax1.set_title("Class Hue Mapping")
+    else:
+        fig = plt.figure(figsize=(6, 4))
+        gs = gridspec.GridSpec(1, 2)
+
+        ax2 = fig.add_subplot(gs[0])
+        ax3 = fig.add_subplot(gs[1])
 
     # Plot neuron activations
     ax2.imshow(img_rgb[0].reshape(50, 40, 3), aspect='auto')
-    ax2.set_title("Neuron Activations (Layer 1)")
+    ax2.set_title("Layer 1")
+    ax2.axis('off')
 
     ax3.imshow(img_rgb[1].reshape(50, 40, 3), aspect='auto')
-    ax3.set_title("Neuron Activations (Layer 2)")
+    ax3.set_title("Layer 2")
+    ax3.axis('off')
 
     plt.tight_layout()
 

@@ -9,5 +9,6 @@ sparsity_*
 activations_figures*
 sparsity/report
 sparsity/models
-accuracy_reports
+accuracy_reports*
 acc_*
+sensitivity_analysis*

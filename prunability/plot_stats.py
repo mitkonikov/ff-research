@@ -407,3 +407,38 @@ print("\\end{tabular}")
 print("\\end{table}")
 
 # %%
+
+def plot_color_hue_mapping():
+    import matplotlib.colors as mcolors
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    num_classes = 10
+
+    width = 1000
+    height = 10
+    spectrum_hue = np.linspace(0, 1, width)
+    spectrum_hsv = np.stack([spectrum_hue, np.ones_like(spectrum_hue), np.ones_like(spectrum_hue)], axis=1)
+    spectrum_rgb = mcolors.hsv_to_rgb(spectrum_hsv)
+    spectrum_img = np.tile(spectrum_rgb[np.newaxis, :, :], (height, 1, 1))
+
+    fig, ax = plt.subplots(figsize=(12, 1), dpi=100)
+    ax.imshow(spectrum_img, aspect='auto')
+
+    step = width // num_classes
+    tick_positions = [i * step + step // 2 for i in range(num_classes)]
+    tick_labels = [f'{i}' for i in range(num_classes)]
+
+    for pos in tick_positions:
+        ax.axvline(pos, color='white', linestyle='--', linewidth=0.5)
+
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels)
+    ax.set_yticks([])
+
+    ax.set_title('Color Hue Mapping')
+
+    plt.tight_layout()
+    plt.show()
+
+# %%
