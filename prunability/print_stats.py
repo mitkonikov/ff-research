@@ -51,7 +51,7 @@ async def load(network: str, checkpoint: str, dataset: str, batch: int, prune_mo
         '--pretest',
         '-d', dataset,
         '-b', str(batch),
-        '-n', str(neurons),
+        '-l', str(neurons),
         '--prune-mode', prune_mode
     ]
 

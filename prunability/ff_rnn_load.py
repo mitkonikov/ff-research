@@ -117,7 +117,7 @@ layer_activations = torch.stack(layer_activations)
 # logger.info(f"Activations Shape: {layer_activations.shape}") # [time, layer, batch_size, neurons]
 sum_of_activations = layer_activations.sum(2).sum(0) # [layer, neurons]
 sorted_indices = sum_of_activations.argsort(1)
-important_indices = prune([net.layers[1].fw, net.layers[2].fw, net.layers[1].bw, net.layers[2].bw], sum_of_activations, args.prune_mode, args.neurons)
+important_indices = prune([net.layers[1].fw, net.layers[2].fw, net.layers[1].bw, net.layers[2].bw], sum_of_activations, args.prune_mode, args.leave_neurons)
 
 # %% EXP 3
 

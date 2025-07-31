@@ -157,7 +157,7 @@ sum_of_neg_activations = neg_acts.sum(1) # [layer, neurons]
 
 sum_of_activations = sum_of_pos_activations - (sum_of_neg_activations if args.substract_neg else 0)
 sorted_indices = sum_of_activations.argsort(1)
-important_indices = prune([net.layers[0].weight, net.layers[1].weight], sum_of_activations, args.prune_mode, args.neurons)
+important_indices = prune([net.layers[0].weight, net.layers[1].weight], sum_of_activations, args.prune_mode, args.leave_neurons)
 
 # %% CORRELATION EXPERIMENT:
 # dots1 = []

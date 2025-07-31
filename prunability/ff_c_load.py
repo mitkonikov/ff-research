@@ -93,7 +93,7 @@ if args.plot:
 layer_activations = torch.stack(activations[1:-1]) # [layer, batch_size, neurons]
 sum_of_activations = layer_activations.sum(1) # [layer, neurons]
 sorted_indices = sum_of_activations.argsort(1)
-important_indices = prune([net.layers[0].weight, net.layers[1].weight], sum_of_activations, args.prune_mode, args.neurons)
+important_indices = prune([net.layers[0].weight, net.layers[1].weight], sum_of_activations, args.prune_mode, args.leave_neurons)
 
 # %% Prune the network
 
@@ -102,7 +102,7 @@ net.layers[1].weight.data = net.layers[1].weight[important_indices[1]][:, import
 net.layers[0].bias.data = net.layers[0].bias[important_indices[0]]
 net.layers[1].bias.data = net.layers[1].bias[important_indices[1]]
 
-classifier_important_indices = torch.cat((important_indices[0], important_indices[1] + 2000))
+classifier_important_indices = torch.cat((important_indices[0], important_indices[1] + net.layers[0].out_features))
 net.classifier.weight.data = net.classifier.weight[:, classifier_important_indices]
 
 # %% Test

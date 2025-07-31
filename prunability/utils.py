@@ -86,7 +86,7 @@ class ArgumentsLoad(ArgumentParserBase):
         parser.add_argument("-i", "--input", help="Path to the network", default=DEFAULT_NET, type=str)
         parser.add_argument("--pretest", help="Run a test after loading the network", action="store_true")
         parser.add_argument("--plot", help="Plot the activations", action="store_true")
-        parser.add_argument("-n", "--neurons", help="Leave the most N active neurons", default=500, type=int)
+        parser.add_argument("-l", "--leave-neurons", help="Leave N neurons after prunning", default=500, type=int)
         parser.add_argument("--save-pruned", help="Save the pruned model", action="store_true")
         parser.add_argument("-o", "--output", help="Output path", default="./models/pruned.pt", type=str)
         parser.add_argument("-v", "--verbose", help="Verbose", action="store_true")
@@ -113,6 +113,8 @@ def prune(layer_weights: List[torch.Tensor], activations: torch.Tensor, prune_mo
     # activations.shape -> [layer, neurons]
     initial_neurons = activations.shape[1]
     sorted_indices = activations.argsort(1)
+    if leave_neurons >= initial_neurons:
+        return sorted_indices
 
     if prune_mode == "first":
         return sorted_indices[:, :leave_neurons]

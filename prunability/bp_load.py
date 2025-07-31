@@ -176,7 +176,7 @@ for hook in hooks:
 acts: torch.Tensor = torch.stack(activations[1:-1]) # [layer, batch_size, neurons]
 sum_of_activations = acts.sum(1) # [layer, neurons]
 sorted_indices = sum_of_activations.argsort(1)
-important_indices = prune([net.layers[1].weight, net.layers[3].weight], sum_of_activations, args.prune_mode, args.neurons)
+important_indices = prune([net.layers[1].weight, net.layers[3].weight], sum_of_activations, args.prune_mode, args.leave_neurons)
 
 # %% Plot activations
 if args.plot:

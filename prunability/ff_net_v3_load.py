@@ -146,7 +146,7 @@ if args.plot:
 
 # %% Pruning
 
-leave_neurons = args.neurons
+leave_neurons = args.leave_neurons
 
 pos_acts = torch.stack(pos_activations[1:]) # [layer, batch_size, neurons]
 neg_acts = torch.stack(neg_activations[1:]) # [layer, batch_size, neurons]
