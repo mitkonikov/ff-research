@@ -35,7 +35,7 @@ dataloader = CreateDatasetFromName(
 logger.info("Setting up the FFRNN...")
 
 net = FFRNN.from_dimensions(
-    dimensions=[dataloader.get_input_shape().numel(), 2000, 2000, dataloader.get_output_shape().numel()],
+    dimensions=[dataloader.get_input_shape().numel(), args.neurons, args.neurons, dataloader.get_output_shape().numel()],
     K_train=10,
     K_testlow=3,
     K_testhigh=8,

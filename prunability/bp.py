@@ -21,11 +21,11 @@ class BPDenseNet(IFF):
 
         layers = [
             torch.nn.Flatten(),
-            torch.nn.Linear(in_features, 2000),
+            torch.nn.Linear(in_features, args.neurons),
             torch.nn.ReLU(),
-            torch.nn.Linear(2000, 2000),
+            torch.nn.Linear(args.neurons, args.neurons),
             torch.nn.ReLU(),
-            torch.nn.Linear(2000, out_features),
+            torch.nn.Linear(args.neurons, out_features),
         ]
 
         self.lr = lr

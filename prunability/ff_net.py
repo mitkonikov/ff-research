@@ -39,15 +39,15 @@ lr = args.lr
 
 layer1 = FFLinear(
     in_features=dataloader.numel(),
-    out_features=2000,
+    out_features=args.neurons,
     loss_threshold=lt,
     lr=lr,
     device=device,
 )
 
 layer2 = FFLinear(
-    in_features=2000,
-    out_features=2000,
+    in_features=args.neurons,
+    out_features=args.neurons,
     loss_threshold=lt,
     lr=lr,
     device=device,

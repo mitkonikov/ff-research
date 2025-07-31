@@ -52,6 +52,7 @@ class ArgumentsTrain(ArgumentParserBase):
         parser.add_argument("-v", "--verbose", help="Verbose", action="store_true")
         parser.add_argument("-e", "--epochs", help="Number of epochs", default=60, type=int)
         parser.add_argument("-u", "--use", help="Part of MNIST to use", default=1.0, type=float)
+        parser.add_argument("-n", "--neurons", help="Neurons in each layer", default=2000, type=int)
         parser.add_argument("--val-split", help="Validation Split", default=0.1, type=float)
         parser.add_argument("--scheduler", help="Enable the Learning Rate Scheduler", action="store_true")
         parser.add_argument("--minimize", help="Optimize by minimization of the goodness", action="store_true")
