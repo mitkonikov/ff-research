@@ -24,10 +24,13 @@ def main():
                     "to a specified directory.")
     parser.add_argument('input_dir', type=str, help='Directory containing the sparsity report files.')
     parser.add_argument('--output-dir', type=str, default='./sparsity_plots', help='Directory to save the generated plots (default: ./sparsity_plots)')
+    parser.add_argument('--plot-type', type=str, choices=['layers', 'neurons'], default='neurons',
+                        help='Type of plot: "layers" for individual layers, "neurons" for multiple layer sizes (default: neurons)')
     args = parser.parse_args()
 
     input_dir = args.input_dir
     output_dir = args.output_dir
+    plot_type = args.plot_type
 
     os.makedirs(output_dir, exist_ok=True)
     print("Plotting sparsity data...")
@@ -47,6 +50,7 @@ def main():
             sys.executable, "plot_sparsity.py",
             "-i", input_dir,
             "-t", sparsity_type,
+            "--plot-type", plot_type,
             "--save",
             "--output", output_path
         ], check=True)

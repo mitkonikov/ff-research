@@ -297,16 +297,28 @@ if __name__ == "__main__":
     parser.add_argument('--max-y', type=float, default=None, help='Maximum y-axis value')
     parser.add_argument('--save', action='store_true', help='Save the plot instead of showing it')
     parser.add_argument('--output', type=str, default=None, help='Output file to save the plot')
+    parser.add_argument('--plot-type', type=str, choices=['layers', 'neurons'], default='neurons',
+                        help='Type of plot: "layers" for individual layers, "neurons" for multiple layer sizes (default: neurons)')
     args = parser.parse_args()
 
     FFRNN = args.enable_ffrnn
 
-    plot_accumulated_sparsity_report_for_all_datasets_neurons(
-        input_dir=args.input_dir,
-        sparsity_type=args.sparsity_type,
-        min_y=args.min_y,
-        max_y=args.max_y,
-        save=args.save,
-        output=args.output
-    )
+    if args.plot_type == 'layers':
+        plot_accumulated_sparsity_report_for_all_datasets(
+            input_dir=args.input_dir,
+            sparsity_type=args.sparsity_type,
+            min_y=args.min_y,
+            max_y=args.max_y,
+            save=args.save,
+            output=args.output
+        )
+    else:
+        plot_accumulated_sparsity_report_for_all_datasets_neurons(
+            input_dir=args.input_dir,
+            sparsity_type=args.sparsity_type,
+            min_y=args.min_y,
+            max_y=args.max_y,
+            save=args.save,
+            output=args.output
+        )
     
