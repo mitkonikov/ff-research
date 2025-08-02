@@ -436,7 +436,7 @@ def plot_color_hue_mapping():
     ax.set_xticklabels(tick_labels)
     ax.set_yticks([])
 
-    ax.set_title('Color Hue Mapping')
+    ax.set_title('Class Colormap')
 
     plt.tight_layout()
     plt.show()

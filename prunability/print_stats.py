@@ -152,7 +152,7 @@ def prune(network_type: str, checkpoint: str, dataset: str, prune_mode: str, out
     print(f"JSON output saved at {json_output}")
 
 # %% Accuracy report
-def print_acc_to_json(main_dir: str, dataset: str, network_type: str, output_dir: str):
+def print_acc_to_json(main_dir: str, dataset: str, network_type: str, output_dir: str, save_models: bool):
     loader = get_loader(network_type)
 
     os.makedirs(output_dir, exist_ok=True)
@@ -174,9 +174,9 @@ def print_acc_to_json(main_dir: str, dataset: str, network_type: str, output_dir
             'prune_mode': 'random',
             'neurons': 2000,
             'seed': 42,
-            'output': os.path.join(output_dir, f"{network_type}_{dataset}.pt")
         }
 
+        args['output'] = os.path.join(output_dir, f"{network_type}_{dataset}.pt") if save_models else None
         checkpoint_args.append(args)
         
     with Pool(4) as p:
@@ -544,13 +544,11 @@ def make_sensitivity_analysis_sparsity_plot(main_dir: str, output_dir: str):
 
 # %% Run
 if __name__ == '__main__':
-    # output_dir = './accuracy_reports_4'
+    # input_dir = './models_ff_min_peer10'
+    # output_dir = './models_ff_min_peer10_acc'
     # for net in ['bp', 'ff', 'ffc', 'ffrnn']:
     #     for dataset in ['mnist', 'fashion', 'cifar10']:
-    #         print_acc_to_json("./acc_3", dataset, net, output_dir)
-    #         for file in os.listdir(output_dir):
-    #             if file.endswith('.pt'):
-    #                 os.remove(os.path.join(output_dir, file))
+    #         print_acc_to_json(input_dir, dataset, net, output_dir, False)
 
     # make_sensitivity_analysis_plot('./accuracy_reports_4', './sensitivity_analysis_accuracy_plots')
     # make_sensitivity_analysis_sparsity_plot('./accuracy_reports_4', './sensitivity_analysis_sparsity_plots')
@@ -561,6 +559,7 @@ if __name__ == '__main__':
     # main_dir = "./accuracy_reports_3"
     # make_sensitivity_analysis_latex_table(main_dir)
     # make_sensitivity_analysis_sparsity_latex_table(main_dir)
+    # make_peer_accuracy_table('./models_ff_min_peer10_acc')
 
     # The difference between minimization and maximization
     # save_min_max('ff3', './models_ff_v3_max', './models_ff_v3_min', 'mnist', './minimize_reports2/ff_v3.json')
